@@ -305,7 +305,7 @@ class File_Handler():
                 
 
             except Exception as e:
-                console.print("[bold red]NSM_Files Module Error: [yellow]",e)
+                console.print("[bold red]NSM_Files Module BACKGROUND Error: [yellow]",e)
                 time.sleep(2)
                 break
 
@@ -356,7 +356,7 @@ class File_Handler():
                 
 
             except Exception as e:
-                console.print("[bold red]NSM_Files Module Error: [yellow]",e)
+                console.print("[bold red]NSM_Files Module CONTROLLER Error: [yellow]",e)
                 time.sleep(2)
                 break
 

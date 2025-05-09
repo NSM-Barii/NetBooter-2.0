@@ -141,8 +141,15 @@ class Packet_Creation():
     
     def udp_flood(self, target_port: int, target_ip: str, payload):
         """This method will be responsible for sending strictly udp packets"""
-       
         
+
+        # THIS CODE RIGHT HERE IS TEMP // LOL
+        choice = console.input("Do you want a 0.5 time delay between packets being sent(empty string == yes, anything else is no): ").strip().lower()
+        if choice == "":
+            delay = True
+        else:
+            delay = False
+
         # ASSIGN VARIABLES
         self.packets_sent = 0
         time_start = time.time()
@@ -195,20 +202,26 @@ class Packet_Creation():
 
 
                         # USE THIS SIMPLE LITTLE METHOD TO GET LATENCY AND OUTPUT RESULT
-                        latency = str(File_Handler.background_thread_pull_info(json_pull="latency"))
-                        joined = []
-                        for char in latency:
-                            joined += char
-                        if joined:
-                            console.print(joined)
-                            latency = (f"{joined[0]}{joined[1]}{joined[2]}{joined[3]}{joined[4]}")
+                        try:
+                            latency = str(File_Handler.background_thread_pull_info(json_pull="latency"))
+                            joined = []
+                            for char in latency:
+                                joined += char
+                            if joined:
+                                if delay:
+                                    console.print(joined)
+                                latency = (f"{joined[0]}{joined[1]}{joined[2]}{joined[3]}{joined[4]}")
+                            elif joined == None:
+                                latency = False
+                        except Exception as e:
+                            latency = e
 
 
                         # UPDATE VARIABLE VALUES
                         panel.renderable = f"[bold red]Total Packets Sent: [bold purple]{self.packets_sent}  |  [bold red]Time Elapsed: [bold purple]{time_total:.2f}  |  [bold red]Target Latency: [bold purple]{latency}"        
 
-
-                        time.sleep(.05)
+                        if delay:
+                            time.sleep(.05)
 
 
                 

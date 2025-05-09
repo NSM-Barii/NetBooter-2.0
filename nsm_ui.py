@@ -116,8 +116,7 @@ class MainUI():
 
                 # USE THIS CONDITION TO CLEAR SCREEN FROM ONE SPOT DYNAMICALLY
                 cc = ["1", "2", "4"]
-                if choice in cc:
-                    Utilities.clear_screen()
+                Utilities.clear_screen() if choice in cc else choice
                 
 
                 #UDP FLOODER
